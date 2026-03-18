@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>DE::RUNBOOK // RAJNI 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Orbitron:wght@700;900&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --black:#000;--bg:#030508;--g1:#060d14;--g2:#091420;
+  --border:#0d2235;--border2:#0f2d40;
+  --neon:#00ff9d;--neon2:#00cc7d;--neon-dim:rgba(0,255,157,.12);
+  --amber:#ffb800;--red:#ff3c3c;--blue:#00aaff;--purple:#b44dff;
+  --text:#c8e0f0;--muted:#3a5568;--faint:#1a3040;
+  --mono:'IBM Plex Mono',monospace;--head:'Orbitron',sans-serif;
+}
+html,body{height:100%;background:var(--black);color:var(--text);font-family:var(--mono);overflow:hidden}
+#root{height:100%;display:flex;flex-direction:column}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:var(--black)}
+::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* Grid background */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(0,255,157,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,255,157,.025) 1px,transparent 1px);
+  background-size:40px 40px;z-index:0;
+}
+
+/* Scanlines */
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.07) 3px,rgba(0,0,0,.07) 4px);
+}
+
+.layer{position:relative;z-index:1}
+
+/* Glow effects */
+.neon-text{color:var(--neon);text-shadow:0 0 20px rgba(0,255,157,.6),0 0 40px rgba(0,255,157,.3)}
+.neon-border{border-color:var(--neon)!important;box-shadow:0 0 12px rgba(0,255,157,.2),inset 0 0 12px rgba(0,255,157,.05)}
+.amber-glow{color:var(--amber);text-shadow:0 0 16px rgba(255,184,0,.5)}
+.red-glow{color:var(--red);text-shadow:0 0 16px rgba(255,60,60,.5)}
+
+/* Pipeline connector */
+.pipe-h{height:1px;background:linear-gradient(90deg,transparent,var(--neon),transparent);opacity:.4}
+.pipe-v{width:1px;background:linear-gradient(180deg,transparent,var(--neon),transparent);opacity:.4}
+
+/* Blink cursor */
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.cursor::after{content:'█';animation:blink 1s infinite;color:var(--neon);font-size:.8em;margin-left:2px}
+
+/* Data flow animation */
+@keyframes flow{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
+@keyframes pulse-dot{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.6}}
+@keyframes shimmer{0%{left:-100%}100%{left:200%}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .3s ease}
+
+/* Scrollable panels */
+.scroll-panel{overflow-y:auto;height:100%}
+.scroll-panel::-webkit-scrollbar{width:3px}
+
+/* Tag pill */
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 8px;border-radius:2px;letter-spacing:.5px;font-weight:500}
+
+/* Hover states */
+.row-hover:hover{background:var(--faint)!important;cursor:pointer}
+.card-hover{transition:border-color .2s,box-shadow .2s}
+.card-hover:hover{border-color:var(--neon2)!important;box-shadow:0 0 20px rgba(0,255,157,.1)}
+
+/* Progress bar */
+.pbar{height:3px;background:var(--border2);border-radius:0;overflow:hidden;position:relative}
+.pbar-fill{height:100%;background:linear-gradient(90deg,var(--neon),var(--blue));transition:width .6s ease;position:relative}
+.pbar-fill::after{
+  content:'';position:absolute;top:0;width:60px;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);
+  animation:shimmer 2s infinite;
+}
+
+/* Checkbox */
+.chk{width:14px;height:14px;border:1px solid var(--muted);border-radius:2px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:9px;transition:all .15s;cursor:pointer}
+.chk.done{border-color:var(--neon);background:var(--neon);color:#000;font-weight:700;box-shadow:0 0 8px rgba(0,255,157,.4)}
+
+/* Tab button */
+.tab-btn{padding:6px 14px;border:none;background:transparent;font-family:var(--mono);
+  font-size:10px;letter-spacing:1.5px;cursor:pointer;transition:all .15s;
+  border-bottom:2px solid transparent;color:var(--muted)}
+.tab-btn.active{color:var(--neon);border-bottom-color:var(--neon)}
+.tab-btn:hover:not(.active){color:var(--text)}
+
+/* Phase colors map */
+.c1{--pc:#00ff9d}.c2{--pc:#ffb800}.c3{--pc:#b44dff}.c4{--pc:#ff3c3c}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useMemo}=React;
+
+// ── DATA ────────────────────────────────────────────────────────────────────
+const PHASES=[
+  {id:1,col:"#00ff9d",colDim:"rgba(0,255,157,.1)",colBorder:"rgba(0,255,157,.2)",
+   icon:"SQL",label:"Advanced SQL & Data Modeling",short:"SQL",
+   weeks:[1,2,3,4],start:"Mar 12",end:"Apr 8",
+   startDate:"2026-03-12",endDate:"2026-04-08",
+   weekTopics:[
+     {w:1,title:"Window Functions Deep Dive",
+      tasks:["ROW_NUMBER, RANK, DENSE_RANK, NTILE","LAG/LEAD, FIRST_VALUE/LAST_VALUE","Frames: ROWS vs RANGE","Practice: payment retries analysis with window fns"]},
+     {w:2,title:"CTEs & Query Optimization",
+      tasks:["Recursive CTEs for hierarchical data","Query planner & EXPLAIN ANALYZE","Index strategies: B-tree, Hash, Partial","Practice: Rapido trip funnel analysis"]},
+     {w:3,title:"Data Modeling Patterns",
+      tasks:["Star schema & snowflake schema","Slowly changing dimensions (SCD 1–3)","Data vault 2.0 fundamentals","Build: Payment domain dimensional model"]},
+     {w:4,title:"Advanced Patterns & Review",
+      tasks:["Pivot/unpivot, JSON operations","Partitioning strategies","MSc project: credit risk feature SQL","Review & mini-project deploy"]}
+   ]},
+  {id:2,col:"#ffb800",colDim:"rgba(255,184,0,.1)",colBorder:"rgba(255,184,0,.2)",
+   icon:"SPK",label:"Spark / PySpark Internals",short:"PySpark",
+   weeks:[5,6,7,8],start:"Apr 9",end:"May 6",
+   startDate:"2026-04-09",endDate:"2026-05-06",
+   weekTopics:[
+     {w:5,title:"Spark Architecture",
+      tasks:["Driver, Executor, Cluster Manager","DAG & Stage execution model","Transformations: narrow vs wide","RDD vs DataFrame vs Dataset"]},
+     {w:6,title:"Performance Tuning",
+      tasks:["Partitioning & shuffling strategies","Catalyst optimizer & Tungsten","Broadcast joins & skew handling","AWS S3 read/write optimization"]},
+     {w:7,title:"Structured Streaming",
+      tasks:["Micro-batch vs continuous processing","Watermarking & state management","Event-time processing","Build: real-time payment stream pipeline"]},
+     {w:8,title:"Delta Lake & Databricks",
+      tasks:["ACID transactions on S3","Time travel & schema evolution","Z-ordering & optimize","MSc project: credit risk feature pipeline"]}
+   ]},
+  {id:3,col:"#b44dff",colDim:"rgba(180,77,255,.1)",colBorder:"rgba(180,77,255,.2)",
+   icon:"AFW",label:"Airflow & Pipeline Architecture",short:"Airflow",
+   weeks:[9,10,11,12],start:"May 7",end:"Jun 3",
+   startDate:"2026-05-07",endDate:"2026-06-03",
+   weekTopics:[
+     {w:9,title:"Airflow Core",
+      tasks:["DAGs, operators, sensors, hooks","XComs & task dependencies","Backfilling & catchup","TaskFlow API"]},
+     {w:10,title:"Pipeline Design Patterns",
+      tasks:["Idempotency & exactly-once semantics","Dynamic DAG generation","Custom operators & plugins","dbt + Airflow integration"]},
+     {w:11,title:"Observability & SLAs",
+      tasks:["SLA misses, alerts, email on failure","OpenSearch/Kibana integration","Data quality checks (Great Expectations)","Grafana dashboards for pipelines"]},
+     {w:12,title:"Production Patterns",
+      tasks:["Blue-green deployments for pipelines","Secret management (Vault/AWS SSM)","CI/CD for DAGs","MSc project: credit risk pipeline orchestration"]}
+   ]},
+  {id:4,col:"#ff3c3c",colDim:"rgba(255,60,60,.1)",colBorder:"rgba(255,60,60,.2)",
+   icon:"SYS",label:"System Design & Interview Prep",short:"Interview",
+   weeks:[13,14,15,16],start:"Jun 4",end:"Jul 1",
+   startDate:"2026-06-04",endDate:"2026-07-01",
+   weekTopics:[
+     {w:13,title:"Large-Scale System Design",
+      tasks:["Lambda vs Kappa architecture","Event-driven data platforms","Data lake vs lakehouse vs warehouse","Design: payment analytics platform"]},
+     {w:14,title:"Interview Practice",
+      tasks:["SQL interview questions (hard)","System design mock: Uber-scale trips","Behavioral: STAR stories from Rapido/Simpl","DE take-home prep"]},
+     {w:15,title:"Portfolio & MSc Finalization",
+      tasks:["GitHub portfolio polish","MSc credit risk project write-up","Resume final update","LinkedIn DE positioning"]},
+     {w:16,title:"Final Review & Offers",
+      tasks:["Mock interviews with peer/mentor","Salary negotiation prep (₹24–30L)","Offer evaluation framework","🎯 Target: DE role secured!"]}
+   ]}
+];
+
+const RESOURCES={
+  1:{
+    docs:[
+      {t:"PostgreSQL Window Functions",u:"https://www.postgresql.org/docs/current/tutorial-window.html",d:"Official PostgreSQL docs — gold standard reference"},
+      {t:"Use The Index, Luke",u:"https://use-the-index-luke.com",d:"Visual guide to SQL indexing strategies"},
+      {t:"Kimball Group — DW Toolkit",u:"https://www.kimballgroup.com",d:"Dimensional modeling bible by Ralph Kimball"},
+      {t:"dbt Best Practices",u:"https://docs.getdbt.com/best-practices",d:"Modern analytics engineering patterns"},
+    ],
+    sites:[
+      {t:"SQLZoo — Interactive Practice",u:"https://sqlzoo.net",d:"Browser-based SQL exercises across dialects"},
+      {t:"PGExercises",u:"https://pgexercises.com",d:"PostgreSQL-specific practice problems"},
+      {t:"Mode Analytics SQL Tutorial",u:"https://mode.com/sql-tutorial/",d:"Analytics-focused SQL learning path"},
+      {t:"LeetCode SQL 50",u:"https://leetcode.com/studyplan/top-sql-50/",d:"Top 50 interview SQL problems with solutions"},
+    ],
+    podcasts:[
+      {t:"Data Engineering Podcast",u:"https://www.dataengineeringpodcast.com",d:"Ep 200+ specifically on data modeling patterns"},
+      {t:"Analytics Engineering Podcast (dbt)",u:"https://roundup.getdbt.com/podcast",d:"dbt Labs team on SQL & transformation"},
+      {t:"Practical AI",u:"https://changelog.com/practicalai",d:"Applied data & ML in production"},
+    ],
+    certs:[
+      {t:"Google Data Analytics — Audit Free (Coursera)",u:"https://www.coursera.org/professional-certificates/google-data-analytics",d:"Audit all 8 courses for free — no certificate but full content"},
+      {t:"DataCamp SQL Fundamentals Track",u:"https://www.datacamp.com/tracks/sql-fundamentals",d:"Free with 2-month trial"},
+      {t:"AWS Skill Builder — Analytics (Free)",u:"https://explore.skillbuilder.aws",d:"Free AWS analytics courses & labs"},
+    ]
+  },
+  2:{
+    docs:[
+      {t:"Apache Spark Official Docs",u:"https://spark.apache.org/docs/latest/",d:"Comprehensive internals, API, configuration"},
+      {t:"Databricks Documentation",u:"https://docs.databricks.com",d:"Delta Lake, MLflow, Structured Streaming"},
+      {t:"PySpark API Reference",u:"https://spark.apache.org/docs/latest/api/python/",d:"Full PySpark DataFrame & RDD API"},
+      {t:"Delta Lake Docs",u:"https://docs.delta.io/latest/index.html",d:"ACID transactions on cloud storage"},
+    ],
+    sites:[
+      {t:"Databricks Academy (Free Courses)",u:"https://www.databricks.com/learn/training/home",d:"Official free Databricks training"},
+      {t:"Spark By Examples",u:"https://sparkbyexamples.com",d:"Practical PySpark code patterns & snippets"},
+      {t:"Awesome Spark (GitHub)",u:"https://github.com/awesome-spark/awesome-spark",d:"Curated list of Spark resources"},
+      {t:"Databricks YouTube Channel",u:"https://www.youtube.com/@Databricks",d:"Spark + AI Summit free conference talks"},
+    ],
+    podcasts:[
+      {t:"Data Engineering Podcast — Spark",u:"https://www.dataengineeringpodcast.com/tag/apache-spark/",d:"Multiple Spark internals deep-dive episodes"},
+      {t:"The Data Stack Show",u:"https://datastackshow.com",d:"Modern data stack & lakehouse discussions"},
+    ],
+    certs:[
+      {t:"Databricks Lakehouse Fundamentals (Free)",u:"https://www.databricks.com/learn/training/lakehouse-fundamentals",d:"100% free, beginner Databricks cert"},
+      {t:"Databricks Certified Associate Developer",u:"https://www.databricks.com/learn/certification/apache-spark-developer-associate",d:"~$200 exam, free study guide & practice tests"},
+      {t:"AWS Skill Builder — EMR & Spark",u:"https://explore.skillbuilder.aws",d:"Free AWS Spark/EMR hands-on labs"},
+    ]
+  },
+  3:{
+    docs:[
+      {t:"Apache Airflow Official Docs",u:"https://airflow.apache.org/docs/",d:"Core concepts, TaskFlow API, operators"},
+      {t:"Astronomer — Airflow Guides",u:"https://docs.astronomer.io/learn",d:"Best practical Airflow production resource"},
+      {t:"Great Expectations Docs",u:"https://docs.greatexpectations.io",d:"Data quality validation for pipelines"},
+      {t:"dbt Core Docs",u:"https://docs.getdbt.com/docs/introduction",d:"Transformation layer reference"},
+    ],
+    sites:[
+      {t:"Astronomer Blog",u:"https://www.astronomer.io/blog/",d:"Deep Airflow patterns, best practices, case studies"},
+      {t:"Airflow Best Practices (Official)",u:"https://airflow.apache.org/docs/apache-airflow/stable/best-practices.html",d:"Production patterns from the Airflow team"},
+      {t:"Medium — Data Engineering tag",u:"https://medium.com/tag/data-engineering",d:"Real-world Airflow production stories"},
+    ],
+    podcasts:[
+      {t:"Data Engineering Podcast — Airflow",u:"https://www.dataengineeringpodcast.com/tag/apache-airflow/",d:"Multiple episodes: Airflow 2.0, TaskFlow, KubernetesPodOperator"},
+      {t:"The Analytics Engineering Podcast",u:"https://roundup.getdbt.com/podcast",d:"dbt + Airflow integration and lineage"},
+    ],
+    certs:[
+      {t:"Astronomer Certification — DAG Authoring",u:"https://www.astronomer.io/certification/",d:"Free study guide, paid exam (~$150)"},
+      {t:"GCP — Batch Data Pipelines (Audit Free)",u:"https://www.coursera.org/learn/batch-data-pipelines-gcp",d:"Audit free on Coursera"},
+    ]
+  },
+  4:{
+    docs:[
+      {t:"Designing Data-Intensive Applications (DDIA)",u:"https://dataintensive.net",d:"Martin Kleppmann — essential for all DE interviews"},
+      {t:"The Data Engineering Cookbook (Free)",u:"https://github.com/andkret/Cookbook",d:"Free GitHub book — complete DE learning path"},
+      {t:"AWS Well-Architected — Data Analytics Lens",u:"https://aws.amazon.com/architecture/well-architected/",d:"AWS large-scale data architecture patterns"},
+    ],
+    sites:[
+      {t:"ByteByteGo — System Design",u:"https://bytebytego.com",d:"Visual system design — best for DE interview prep"},
+      {t:"High Scalability",u:"http://highscalability.com",d:"Real-world architecture: Uber, Netflix, LinkedIn"},
+      {t:"Bald Data Engineering (YouTube)",u:"https://www.youtube.com/@balddataengineering",d:"Free DE interview prep videos"},
+      {t:"Seattle Data Guy (YouTube)",u:"https://www.youtube.com/@SeattleDataGuy",d:"DE career guidance & technical deep dives"},
+    ],
+    podcasts:[
+      {t:"Software Engineering Daily",u:"https://softwareengineeringdaily.com",d:"System design & distributed systems deep dives"},
+      {t:"The Data Engineering Show",u:"https://www.dedataengineers.com/podcast",d:"DE career stories & technical paths"},
+      {t:"Lex Fridman — AI/Data episodes",u:"https://lexfridman.com/podcast/",d:"Big picture AI and data systems context"},
+    ],
+    certs:[
+      {t:"AWS Cloud Practitioner — Free Prep",u:"https://aws.amazon.com/certification/certified-cloud-practitioner/",d:"Free study on AWS Skill Builder"},
+      {t:"GCP Professional Data Engineer — Free Prep",u:"https://cloud.google.com/learn/certification/data-engineer",d:"Free sample questions + coursework"},
+      {t:"LinkedIn Learning — DE Career Path",u:"https://www.linkedin.com/learning/paths/become-a-data-engineer",d:"Free with LinkedIn Premium trial"},
+    ]
+  }
+};
+
+const RUNBOOK_DATA=[
+  {cat:"DAILY_ROUTINE",label:"// daily_routine.sh",items:[
+    {t:"08:45 — Pre-session prep [15 min]",d:"Check today's topic. Open reference docs tab. Skim yesterday's notes. Write today's single goal in plain English on paper. Mentally load context."},
+    {t:"09:00 — Deep work block [90 min]",d:"No phone. No Slack. Study or code the day's topic. Pomodoro: 45min ON, 10min OFF. All code committed to GitHub immediately — no 'I'll push later'."},
+    {t:"10:30 — Hands-on practice [60 min]",d:"Apply the concept: write SQL/PySpark/DAG for a payment domain problem. Tie it to Rapido or Simpl context. This is your interview story raw material."},
+    {t:"11:30 — MSc integration [30 min]",d:"Cross-apply today's topic to credit risk MSc project. Every concept = portfolio artifact. SQL phase → feature queries. PySpark → feature pipeline. Airflow → orchestration."},
+    {t:"12:00 — Wrap & log [10 min]",d:"Mark tasks complete below. Write 1 sentence: what did you learn? Push all code. Set tomorrow's context in your head before closing the laptop."},
+  ]},
+  {cat:"WEEKLY_RHYTHM",label:"// weekly_cadence.yaml",items:[
+    {t:"MON — New week kick-off",d:"Read the week topic fully. Create a GitHub issue as the week's deliverable. Set up the practice dataset. Do not start coding Monday morning without reading first."},
+    {t:"WED — Mid-week checkpoint",d:"Have you done the practice exercise? If behind, cut scope — do NOT skip. Review Wednesday's concept with a fresh example from Rapido's domain."},
+    {t:"SAT — Weekly review",d:"What stuck? What didn't? Update progress here. Write a 5-tweet thread (even if you don't post). Forcing yourself to explain something simply = deepest retention."},
+    {t:"EVERY WEEK — One portfolio commit",d:"Every single week must produce ONE GitHub artifact: a SQL query, PySpark notebook, DAG, or design doc. No week without a merge. Non-negotiable."},
+  ]},
+  {cat:"INTERVIEW_OPS",label:"// interview_prep.go",items:[
+    {t:"Daily [from Week 10]: 1 LeetCode SQL/DE",d:"Maintain a streak. Focus on window functions, complex joins, system design. Time yourself — 20 min max per problem. Review wrong answers immediately, not later."},
+    {t:"Weekly [from Week 10]: 1 mock system design",d:"Use ByteByteGo prompts. Record yourself explaining. Review against DDIA. Common prompts: design Uber analytics, design a payment ledger, design Netflix watch history."},
+    {t:"Build these 5 STAR stories",d:"1) Payment success rate improvement at Simpl  2) Debugging production issue at Rapido  3) Scaling a data pipeline  4) Cross-team collaboration to ship something  5) Learning a new tech under pressure"},
+    {t:"Salary anchoring playbook",d:"Target: ₹24–30 LPA. First number YOU say: ₹28L. Never anchor below target. Use competing offers as leverage. Research: Groww, Razorpay, PhonePe, Flipkart DE bands on Levels.fyi."},
+  ]},
+  {cat:"PORTFOLIO_OPS",label:"// portfolio.tf",items:[
+    {t:"Credit Risk = Flagship Portfolio Project",d:"Frame it: 'End-to-end ML pipeline for digital lending credit risk using PySpark behavioral feature engineering'. Each phase adds a layer: SQL features → PySpark pipeline → Airflow orchestration."},
+    {t:"GitHub repo structure",d:"4 repos: de-sql-exercises | credit-risk-pipeline | airflow-dags | system-design-notes. Every README includes business context from Rapido/Simpl domain. No orphaned code without story."},
+    {t:"MSc VIT submission: June 2026",d:"Major project due before Jun 30. Begin formal write-up in Phase 3 (Week 10). Phase 4 = polish + viva prep. The pipeline you build in Phase 2-3 IS the project — no extra work."},
+    {t:"LinkedIn signal strategy",d:"Post one technical insight per week from Week 8 onwards. 3-paragraph format: problem → what you learned → how it applies. Tag: #DataEngineering #PySpark #SQL. Compound visibility."},
+  ]},
+];
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+function getWeek(){
+  const start=new Date("2026-03-12"),now=new Date();
+  const d=Math.floor((now-start)/(7*864e5));
+  return Math.min(Math.max(d+1,1),16);
+}
+function getPhase(w){return PHASES.find(p=>p.weeks.includes(w))||PHASES[0]}
+function todayKey(){return new Date().toISOString().split("T")[0]}
+function load(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+
+// ── TOPBAR ───────────────────────────────────────────────────────────────────
+function Topbar({tab,setTab}){
+  const [time,setTime]=useState("");
+  useEffect(()=>{
+    const fmt=()=>{
+      const n=new Date();
+      setTime(n.toLocaleTimeString("en-IN",{timeZone:"Asia/Kolkata",hour12:false}));
+    };
+    fmt();const id=setInterval(fmt,1000);return()=>clearInterval(id);
+  },[]);
+  const week=getWeek();
+  const phase=getPhase(week);
+  const tabs=["DASHBOARD","MAP","TODAY","RESOURCES","RUNBOOK"];
+
+  return <div style={{background:"var(--black)",borderBottom:"1px solid var(--border2)",flexShrink:0,position:"relative",zIndex:10}}>
+    {/* Top strip */}
+    <div style={{
+      display:"flex",justifyContent:"space-between",alignItems:"center",
+      padding:"6px 20px",borderBottom:"1px solid var(--border)",
+      fontSize:"10px",letterSpacing:"1.5px"
+    }}>
+      <div style={{display:"flex",alignItems:"center",gap:"16px"}}>
+        <span style={{fontFamily:"var(--head)",fontSize:"11px",color:"var(--neon)",letterSpacing:"3px"}}>DE::RUNBOOK</span>
+        <span style={{color:"var(--muted)"}}>RAJNI KANT KUSHWAHA</span>
+        <span style={{color:"var(--border2)"}}>|</span>
+        <span style={{color:"var(--muted)"}}>MSC DATA SCIENCE · VIT · 2026</span>
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:"16px",color:"var(--muted)"}}>
+        <span style={{color:"var(--neon)",fontWeight:500}}>W{week}/16</span>
+        <span>09:00–12:00 IST</span>
+        <span style={{color:"var(--text)",fontWeight:500,fontVariantNumeric:"tabular-nums"}}>{time} IST</span>
+        <span style={{
+          background:phase.colDim,border:`1px solid ${phase.colBorder}`,
+          color:phase.col,padding:"1px 8px",borderRadius:"2px",fontSize:"9px",letterSpacing:"1px"
+        }}>PHASE {phase.id}</span>
+      </div>
+    </div>
+    {/* Nav tabs */}
+    <div style={{display:"flex",padding:"0 12px",gap:"4px"}}>
+      {tabs.map(t=>(
+        <button key={t} className={"tab-btn"+(tab===t?" active":"")} onClick={()=>setTab(t)}>
+          {t}
+        </button>
+      ))}
+    </div>
+  </div>
+}
+
+// ── PIPELINE SVG MAP ─────────────────────────────────────────────────────────
+function PipelineNode({phase,week,x,y,isActive,isDone}){
+  const r=isActive?20:16;
+  return <g>
+    <circle cx={x} cy={y} r={r+4} fill={`${phase.col}08`} stroke={`${phase.col}20`} strokeWidth="1"/>
+    <circle cx={x} cy={y} r={r} fill={isDone?`${phase.col}30`:isActive?`${phase.col}20`:"#060d14"}
+      stroke={isActive||isDone?phase.col:"#0d2235"} strokeWidth={isActive?2:1}/>
+    {isActive&&<circle cx={x} cy={y} r={r+8} fill="none" stroke={phase.col} strokeWidth="0.5" opacity="0.4"/>}
+    <text x={x} y={y+1} textAnchor="middle" dominantBaseline="middle"
+      fill={isActive?phase.col:isDone?`${phase.col}80`:"#3a5568"}
+      fontSize="9" fontFamily="IBM Plex Mono" fontWeight={isActive?"700":"400"}>
+      W{week}
+    </text>
+    {isDone&&<text x={x} y={y+12} textAnchor="middle" fill={phase.col} fontSize="7" opacity="0.6">✓</text>}
+  </g>
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────────────────────
+function Dashboard({progress}){
+  const week=getWeek();
+  const phase=getPhase(week);
+  const wt=phase.weekTopics.find(w=>w.w===week)||phase.weekTopics[0];
+  const tk=todayKey();
+  const done=(progress.daily[tk]||[]);
+  const donePct=Math.round((done.length/wt.tasks.length)*100);
+  const overallDone=Object.values(progress.daily).flat().length;
+  const totalTasks=PHASES.reduce((a,p)=>a+p.weekTopics.reduce((b,w)=>b+w.tasks.length,0),0);
+  const overallPct=Math.round((overallDone/totalTasks)*100);
+
+  return <div className="scroll-panel layer" style={{padding:"20px 24px"}}>
+    {/* Terminal header */}
+    <div style={{marginBottom:"20px",fontSize:"11px",color:"var(--muted)"}}>
+      <span style={{color:"var(--neon)"}}>$ </span>
+      <span className="cursor">de-runbook status --week={week} --date={tk}</span>
+    </div>
+
+    {/* Stats grid */}
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"1px",marginBottom:"20px",border:"1px solid var(--border)",background:"var(--border)"}}>
+      {[
+        {k:"ACTIVE_WEEK",v:`W${week} / 16`,c:"var(--neon)"},
+        {k:"PHASE",v:`${phase.id} :: ${phase.short.toUpperCase()}`,c:phase.col},
+        {k:"TODAY_DONE",v:`${done.length} / ${wt.tasks.length} tasks`,c:donePct===100?"var(--neon)":donePct>50?"var(--amber)":"var(--text)"},
+        {k:"OVERALL_PROGRESS",v:`${overallPct}%`,c:"var(--blue)"},
+      ].map(s=>(
+        <div key={s.k} style={{background:"var(--bg)",padding:"16px 18px"}}>
+          <div style={{fontSize:"9px",color:"var(--muted)",letterSpacing:"2px",marginBottom:"10px"}}>{s.k}</div>
+          <div style={{fontFamily:"var(--head)",fontSize:"16px",fontWeight:700,color:s.c,letterSpacing:"1px"}}>{s.v}</div>
+        </div>
+      ))}
+    </div>
+
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"16px",marginBottom:"16px"}}>
+      {/* Active phase card */}
+      <div style={{border:`1px solid ${phase.colBorder}`,background:phase.colDim,padding:"18px"}}>
+        <div style={{fontSize:"9px",color:"var(--muted)",letterSpacing:"2px",marginBottom:"12px"}}>
+          // ACTIVE_PHASE
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"8px"}}>
+          <span style={{
+            fontFamily:"var(--head)",fontSize:"12px",color:phase.col,
+            background:`${phase.col}15`,padding:"3px 8px",border:`1px solid ${phase.colBorder}`
+          }}>{phase.icon}</span>
+          <span style={{fontSize:"13px",fontWeight:500,color:"var(--text)",letterSpacing:".5px"}}>{phase.label}</span>
+        </div>
+        <div style={{fontSize:"10px",color:"var(--muted)",marginBottom:"14px"}}>
+          {phase.start} → {phase.end} &nbsp;·&nbsp; Week {phase.weeks.indexOf(week)+1} of 4
+        </div>
+        <div className="pbar"><div className="pbar-fill" style={{width:`${((phase.weeks.indexOf(week)+1)/4)*100}%`}}/></div>
+        <div style={{fontSize:"9px",color:"var(--muted)",marginTop:"6px",letterSpacing:"1px"}}>
+          PHASE COMPLETION {Math.round(((phase.weeks.indexOf(week)+1)/4)*100)}%
+        </div>
+      </div>
+
+      {/* This week focus */}
+      <div style={{border:"1px solid var(--border2)",background:"var(--g1)",padding:"18px"}}>
+        <div style={{fontSize:"9px",color:"var(--muted)",letterSpacing:"2px",marginBottom:"12px"}}>
+          // WEEK_{week}_FOCUS :: {wt.title.toUpperCase()}
+        </div>
+        {wt.tasks.map((t,i)=>(
+          <div key={i} style={{
+            display:"flex",gap:"10px",padding:"7px 0",
+            borderBottom:`1px solid var(--border)`,alignItems:"flex-start",fontSize:"11px"
+          }}>
+            <span style={{color:phase.col,flexShrink:0,fontSize:"8px",marginTop:"3px"}}>▶</span>
+            <span style={{color:done.includes(t)?"var(--muted)":"var(--text)",
+              textDecoration:done.includes(t)?"line-through":"none"}}>{t}</span>
+          </div>
+        ))}
+        <div style={{marginTop:"10px"}}>
+          <div className="pbar"><div className="pbar-fill" style={{width:`${donePct}%`,background:`linear-gradient(90deg,${phase.col},${phase.col}88)`}}/></div>
+          <div style={{fontSize:"9px",color:"var(--muted)",marginTop:"5px"}}>TODAY {donePct}%</div>
+        </div>
+      </div>
+    </div>
+
+    {/* 16-week pipeline visual */}
+    <div style={{border:"1px solid var(--border2)",background:"var(--g1)",padding:"18px"}}>
+      <div style={{fontSize:"9px",color:"var(--muted)",letterSpacing:"2px",marginBottom:"16px"}}>// 16_WEEK_PIPELINE // MAR 12 → JUL 1 2026</div>
+      <svg viewBox="0 0 840 80" width="100%" style={{display:"block"}}>
+        {/* Phase labels */}
+        {PHASES.map((p,pi)=>{
+          const cx=pi*210+105;
+          return <text key={pi} x={cx} y="14" textAnchor="middle" fill={p.col}
+            fontSize="8" fontFamily="IBM Plex Mono" letterSpacing="1" opacity="0.7"
+            fontWeight="700">{p.icon}: {p.short.toUpperCase()}</text>
+        })}
+        {/* Connector lines between phases */}
+        {[0,1,2].map(i=>(
+          <line key={i} x1={i*210+195} y1="50" x2={i*210+225} y2="50"
+            stroke="#0d2235" strokeWidth="2" strokeDasharray="3,3"/>
+        ))}
+        {/* Week nodes */}
+        {PHASES.map((phase,pi)=>
+          phase.weeks.map((w,wi)=>{
+            const x=pi*210+wi*52+42;
+            const isAct=w===week;
+            const isDone=w<week;
+            const r=isAct?16:13;
+            return <g key={w}>
+              {wi>0&&<line x1={pi*210+(wi-1)*52+42} y1="50" x2={x} y2="50"
+                stroke={isDone||isAct?`${phase.col}40`:"var(--border)"} strokeWidth="1"/>}
+              {isAct&&<circle cx={x} cy="50" r={r+8} fill="none" stroke={phase.col} strokeWidth="0.5" opacity="0.3"/>}
+              <circle cx={x} cy="50" r={r} fill={isDone?`${phase.col}25`:isAct?`${phase.col}15`:"#060d14"}
+                stroke={isAct?phase.col:isDone?`${phase.col}60`:"var(--border)"}
+                strokeWidth={isAct?2:1}/>
+              <text x={x} y="50" textAnchor="middle" dominantBaseline="middle"
+                fill={isAct?phase.col:isDone?`${phase.col}90`:"#3a5568"}
+                fontSize="8" fontFamily="IBM Plex Mono" fontWeight={isAct?"700":"400"}>
+                W{w}
+              </text>
+              {isDone&&<text x={x} y="65" textAnchor="middle" fill={phase.col} fontSize="6" opacity="0.6">✓</text>}
+              {isAct&&<text x={x} y="65" textAnchor="middle" fill={phase.col} fontSize="6">NOW</text>}
+            </g>
+          })
+        )}
+      </svg>
+      <div style={{display:"flex",gap:"20px",marginTop:"8px",flexWrap:"wrap"}}>
+        {PHASES.map(p=>(
+          <div key={p.id} style={{display:"flex",alignItems:"center",gap:"6px",fontSize:"9px",color:"var(--muted)"}}>
+            <div style={{width:"6px",height:"6px",background:p.col}}/>
+            {p.short.toUpperCase()}
+          </div>
+        ))}
+        <div style={{display:"flex",alignItems:"center",gap:"6px",fontSize:"9px",color:"var(--muted)",marginLeft:"auto"}}>
+          <span>TARGET:</span>
+          <span style={{color:"var(--amber)"}}>DE ROLE ₹24–30L · JULY 2026</span>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+// ── SCHEDULE MAP ──────────────────────────────────────────────────────────────
+function ScheduleMap(){
+  const week=getWeek();
+  return <div className="scroll-panel layer" style={{padding:"20px 24px"}}>
+    <div style={{marginBottom:"20px",fontSize:"11px",color:"var(--muted)"}}>
+      <span style={{color:"var(--neon)"}}>$ </span>
+      <span>cat schedule.yaml | grep --all-phases</span>
+    </div>
+
+    {/* Pipeline flow diagram */}
+    <div style={{border:"1px solid var(--border2)",background:"var(--g1)",padding:"16px",marginBottom:"20px",overflowX:"auto"}}>
+      <svg viewBox="0 0 900 120" width="900" style={{display:"block",minWidth:"600px"}}>
+        {/* Timeline spine */}
+        <line x1="20" y1="60" x2="880" y2="60" stroke="var(--border2)" strokeWidth="1"/>
+        {/* Phase blocks */}
+        {PHASES.map((p,pi)=>{
+          const bx=pi*215+20;
+          const isPast=p.weeks[3]<week;
+          const isActive=p.weeks.includes(week);
+          return <g key={p.id}>
+            {/* Block bg */}
+            <rect x={bx} y="30" width="205" height="60" rx="2"
+              fill={isPast?`${p.col}08`:isActive?`${p.col}12`:"#060d14"}
+              stroke={isActive?p.col:isPast?`${p.col}40`:"var(--border2)"} strokeWidth={isActive?1.5:1}/>
+            {/* Icon badge */}
+            <rect x={bx+6} y="36" width="26" height="16" rx="1" fill={`${p.col}20`} stroke={`${p.col}40`} strokeWidth="0.5"/>
+            <text x={bx+19} y="46" textAnchor="middle" dominantBaseline="middle"
+              fill={p.col} fontSize="8" fontFamily="IBM Plex Mono" fontWeight="700">{p.icon}</text>
+            {/* Label */}
+            <text x={bx+38} y="46" dominantBaseline="middle"
+              fill={isActive?"var(--text)":"var(--muted)"} fontSize="8" fontFamily="IBM Plex Mono">{p.label}</text>
+            {/* Date range */}
+            <text x={bx+8} y="64" fill={p.col} fontSize="7" fontFamily="IBM Plex Mono" opacity="0.7">{p.start} → {p.end}</text>
+            {/* Week chips */}
+            {p.weeks.map((w,wi)=>{
+              const wx=bx+8+wi*48;
+              const isW=w===week;
+              const isDone=w<week;
+              return <g key={w}>
+                <rect x={wx} y="74" width="40" height="12" rx="1"
+                  fill={isDone?`${p.col}20`:isW?`${p.col}30`:"#060d14"}
+                  stroke={isW?p.col:isDone?`${p.col}50`:"var(--border)"} strokeWidth={isW?1:0.5}/>
+                <text x={wx+20} y="80" textAnchor="middle" dominantBaseline="middle"
+                  fill={isW?p.col:isDone?`${p.col}80`:"#3a5568"} fontSize="6" fontFamily="IBM Plex Mono"
+                  fontWeight={isW?"700":"400"}>W{w}{isW?" ▲":isDone?" ✓":""}</text>
+              </g>
+            })}
+            {/* Connector arrow */}
+            {pi<3&&<text x={bx+212} y="60" textAnchor="middle" dominantBaseline="middle"
+              fill="var(--border2)" fontSize="12" fontFamily="IBM Plex Mono">›</text>}
+          </g>
+        })}
+        {/* Goal node */}
+        <circle cx="870" cy="60" r="12" fill="rgba(255,184,0,.15)" stroke="var(--amber)" strokeWidth="1.5"/>
+        <text x="870" y="60" textAnchor="middle" dominantBaseline="middle"
+          fill="var(--amber)" fontSize="7" fontFamily="IBM Plex Mono" fontWeight="700">★</text>
+        <text x="870" y="80" textAnchor="middle" fill="var(--amber)" fontSize="6" fontFamily="IBM Plex Mono">JUL</text>
+      </svg>
+    </div>
+
+    {/* Phase detail grids */}
+    {PHASES.map(phase=>(
+      <div key={phase.id} style={{marginBottom:"24px"}}>
+        <div style={{
+          display:"flex",alignItems:"center",gap:"12px",
+          padding:"10px 14px",marginBottom:"10px",
+          border:`1px solid ${phase.colBorder}`,background:phase.colDim
+        }}>
+          <span style={{
+            fontFamily:"var(--head)",fontSize:"10px",color:phase.col,
+            letterSpacing:"2px",minWidth:"36px"
+          }}>{phase.icon}</span>
+          <span style={{fontSize:"11px",fontWeight:500,color:"var(--text)"}}>{phase.label}</span>
+          <span style={{fontSize:"9px",color:"var(--muted)",marginLeft:"auto"}}>
+            Weeks {phase.weeks[0]}–{phase.weeks[3]} · {phase.start} → {phase.end}
+          </span>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:"1px",background:"var(--border)"}}>
+          {phase.weekTopics.map(wt=>{
+            const isAct=wt.w===week;
+            const isPast=wt.w<week;
+            return <div key={wt.w} style={{
+              background:isAct?phase.colDim:isPast?"var(--g1)":"var(--bg)",
+              padding:"14px",position:"relative"
+            }}>
+              {isAct&&<div style={{
+                position:"absolute",top:0,right:0,
+                background:phase.col,fontSize:"8px",padding:"2px 8px",
+                color:"#000",fontWeight:700,letterSpacing:"2px"
+              }}>ACTIVE</div>}
+              <div style={{display:"flex",gap:"8px",alignItems:"center",marginBottom:"10px"}}>
+                <span style={{
+                  fontSize:"9px",color:phase.col,background:`${phase.col}15`,
+                  padding:"2px 6px",border:`1px solid ${phase.colBorder}`,letterSpacing:"1px",fontWeight:700
+                }}>W{wt.w}</span>
+                <span style={{fontSize:"11px",color:isAct?"var(--text)":"var(--muted)",fontWeight:isAct?600:400}}>
+                  {wt.title}
+                </span>
+              </div>
+              {wt.tasks.map((t,i)=>(
+                <div key={i} style={{
+                  fontSize:"10px",padding:"4px 0",
+                  borderBottom:`1px solid ${phase.colBorder}20`,
+                  display:"flex",gap:"8px",color:isPast?"var(--muted)":"var(--text)",
+                  opacity:isPast?0.5:1,textDecoration:isPast?"line-through":"none"
+                }}>
+                  <span style={{color:phase.col,flexShrink:0,fontSize:"8px",marginTop:"2px"}}>▸</span>{t}
+                </div>
+              ))}
+            </div>
+          })}
+        </div>
+      </div>
+    ))}
+  </div>
+}
+
+// ── TODAY ─────────────────────────────────────────────────────────────────────
+function Today({progress,setProgress}){
+  const week=getWeek();
+  const phase=getPhase(week);
+  const wt=phase.weekTopics.find(w=>w.w===week)||phase.weekTopics[0];
+  const tk=todayKey();
+  const done=progress.daily[tk]||[];
+  const [note,setNote]=useState(progress.notes?.[tk]||"");
+  const pct=Math.round((done.length/wt.tasks.length)*100);
+
+  const toggle=(task)=>{
+    const cur=progress.daily[tk]||[];
+    const next=cur.includes(task)?cur.filter(t=>t!==task):[...cur,task];
+    const np={...progress,daily:{...progress.daily,[tk]:next}};
+    setProgress(np);save("de_prog",np);
+  };
+  const saveNote=(v)=>{
+    setNote(v);
+    const np={...progress,notes:{...(progress.notes||{}),[tk]:v}};
+    setProgress(np);save("de_prog",np);
+  };
+  const pastLogs=Object.entries(progress.notes||{})
+    .filter(([k,v])=>k!==tk&&v)
+    .sort((a,b)=>b[0].localeCompare(a[0]))
+    .slice(0,5);
+
+  return <div className="scroll-panel layer" style={{padding:"20px 24px"}}>
+    <div style={{marginBottom:"20px",fontSize:"11px",color:"var(--muted)"}}>
+      <span style={{color:"var(--neon)"}}>$ </span>
+      <span>cat today.log | date={tk} | week=W{week} | {wt.title}</span>
+    </div>
+
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"16px"}}>
+      {/* Left: checklist */}
+      <div>
+        <div style={{border:`1px solid ${phase.colBorder}`,background:phase.colDim,padding:"16px",marginBottom:"12px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+            <span style={{fontSize:"9px",color:"var(--muted)",letterSpacing:"2px"}}>// W{week}_{wt.title.replace(/ /g,"_").toUpperCase()}</span>
+            <span style={{fontFamily:"var(--head)",fontSize:"18px",color:phase.col}}>{pct}%</span>
+          </div>
+          <div className="pbar" style={{marginBottom:"14px"}}>
+            <div className="pbar-fill" style={{width:`${pct}%`,background:`linear-gradient(90deg,${phase.col},${phase.col}88)`}}/>
+          </div>
+          {wt.tasks.map((task,i)=>{
+            const chk=done.includes(task);
+            return <div key={i} className="row-hover" onClick={()=>toggle(task)} style={{
+              display:"flex",gap:"10px",padding:"10px 8px",
+              borderBottom:`1px solid ${phase.colBorder}20`,
+              background:chk?`${phase.col}08`:"transparent",
+              alignItems:"flex-start",userSelect:"none"
+            }}>
+              <div className={"chk"+(chk?" done":"")} style={{marginTop:"1px",borderColor:chk?phase.col:"var(--muted)"}}>
+                {chk?"✓":""}
+              </div>
+              <span style={{
+                fontSize:"12px",color:chk?"var(--muted)":"var(--text)",
+                textDecoration:chk?"line-through":"none",lineHeight:1.5
+              }}>{task}</span>
+            </div>
+          })}
+        </div>
+
+        {/* Quick stats */}
+        <div style={{border:"1px solid var(--border2)",background:"var(--g1)",padding:"14px",fontSize:"10px"}}>
+          <div style={{color:"var(--muted)",marginBottom:"10px",letterSpacing:"1.5px",fontSize:"9px"}}>// STATUS_REPORT</div>
+          {[
+            ["DATE",tk],
+            ["WEEK",`W${week} — ${wt.title}`],
+            ["TASKS_DONE",`${done.length} / ${wt.tasks.length}`],
+            ["PHASE",`${phase.id} — ${phase.short}`],
+            ["MEET_TIME","09:00–12:00 IST"],
+          ].map(([k,v])=>(
+            <div key={k} style={{display:"flex",gap:"12px",padding:"5px 0",borderBottom:"1px solid var(--border)"}}>
+              <span style={{color:"var(--muted)",minWidth:"110px",fontSize:"9px",letterSpacing:"1px"}}>{k}</span>
+              <span style={{color:"var(--text)",fontWeight:500}}>{v}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Right: notes + logs */}
+      <div>
+        <div style={{border:"1px solid var(--border2)",background:"var(--g1)",padding:"16px",marginBottom:"12px"}}>
+          <div style={{fontSize:"9px",color:"var(--muted)",letterSpacing:"2px",marginBottom:"10px"}}>
+            // WRITE: what did you learn today?
+          </div>
+          <textarea value={note} onChange={e=>saveNote(e.target.value)}
+            placeholder="> e.g. Finally cracked why RANGE vs ROWS matters in running totals — RANGE uses logical offset, ROWS uses physical position..."
+            style={{
+              width:"100%",minHeight:"140px",
+              background:"var(--black)",border:"1px solid var(--border2)",
+              padding:"12px",color:"var(--text)",
+              fontSize:"11px",fontFamily:"var(--mono)",
+              resize:"vertical",outline:"none",lineHeight:1.7,
+              borderRadius:0
+            }}/>
+        </div>
+
+        <div style={{border:"1px solid var(--border2)",background:"var(--g1)",padding:"16px"}}>
+          <div style={{fontSize:"9px",color:"var(--muted)",letterSpacing:"2px",marginBottom:"12px"}}>
+            // LEARNING_LOG (last 5 entries)
+          </div>
+          {pastLogs.length===0&&(
+            <div style={{fontSize:"10px",color:"var(--muted)",fontStyle:"italic",padding:"8px 0"}}>
+              // no previous entries
+            </div>
+          )}
+          {pastLogs.map(([k,v])=>(
+            <div key={k} style={{
+              padding:"10px 0",borderBottom:"1px solid var(--border)",marginBottom:"4px"
+            }}>
+              <div style={{fontSize:"9px",color:"var(--neon)",marginBottom:"4px",letterSpacing:"1px"}}>[{k}]</div>
+              <div style={{fontSize:"10px",color:"var(--muted)",lineHeight:1.6}}>{v}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+// ── RESOURCES ─────────────────────────────────────────────────────────────────
+function Resources(){
+  const [ph,setPh]=useState(1);
+  const [cat,setCat]=useState("docs");
+  const phase=PHASES.find(p=>p.id===ph);
+  const res=RESOURCES[ph];
+  const cats=[{id:"docs",l:"DOCS"},{id:"sites",l:"SITES"},{id:"podcasts",l:"PODCASTS"},{id:"certs",l:"CERTS"}];
+
+  return <div className="scroll-panel layer" style={{padding:"20px 24px"}}>
+    <div style={{marginBottom:"20px",fontSize:"11px",color:"var(--muted)"}}>
+      <span style={{color:"var(--neon)"}}>$ </span>
+      <span>ls resources/ --phase={ph} --type={cat}</span>
+    </div>
+
+    {/* Phase selector */}
+    <div style={{display:"flex",gap:"1px",marginBottom:"16px",background:"var(--border)"}}>
+      {PHASES.map(p=>(
+        <button key={p.id} onClick={()=>setPh(p.id)} style={{
+          flex:1,padding:"10px 8px",border:"none",cursor:"pointer",
+          background:ph===p.id?p.colDim:"var(--bg)",
+          color:ph===p.id?p.col:"var(--muted)",
+          fontSize:"10px",fontFamily:"var(--mono)",letterSpacing:"1px",
+          borderTop:ph===p.id?`2px solid ${p.col}`:"2px solid transparent",
+          transition:"all .15s"
+        }}>
+          {p.icon} · {p.short.toUpperCase()}
+        </button>
+      ))}
+    </div>
+
+    {/* Category tabs */}
+    <div style={{display:"flex",gap:"1px",marginBottom:"16px",background:"var(--border)",width:"fit-content"}}>
+      {cats.map(c=>(
+        <button key={c.id} onClick={()=>setCat(c.id)} style={{
+          padding:"7px 18px",border:"none",cursor:"pointer",
+          background:cat===c.id?"var(--g2)":"var(--bg)",
+          color:cat===c.id?phase.col:"var(--muted)",
+          fontSize:"9px",fontFamily:"var(--mono)",letterSpacing:"1.5px",transition:"all .15s"
+        }}>{c.l}</button>
+      ))}
+    </div>
+
+    {/* Resource list */}
+    <div style={{display:"flex",flexDirection:"column",gap:"1px",background:"var(--border)"}}>
+      {(res[cat]||[]).map((item,i)=>(
+        <a key={i} href={item.u} target="_blank" rel="noopener noreferrer"
+          style={{display:"block",textDecoration:"none",background:"var(--bg)",padding:"14px 16px",transition:"background .15s"}}
+          onMouseEnter={e=>e.currentTarget.style.background="var(--g2)"}
+          onMouseLeave={e=>e.currentTarget.style.background="var(--bg)"}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:"16px"}}>
+            <div style={{flex:1}}>
+              <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"4px"}}>
+                <span style={{
+                  fontSize:"9px",color:phase.col,background:`${phase.col}15`,
+                  padding:"1px 6px",border:`1px solid ${phase.colBorder}`,letterSpacing:"1px",flexShrink:0
+                }}>{String(i+1).padStart(2,"0")}</span>
+                <span style={{fontSize:"12px",color:"var(--text)",fontWeight:500,letterSpacing:".5px"}}>{item.t}</span>
+              </div>
+              <div style={{fontSize:"10px",color:"var(--muted)",paddingLeft:"30px"}}>{item.d}</div>
+              <div style={{fontSize:"9px",color:"var(--muted)",paddingLeft:"30px",marginTop:"4px",opacity:.5,
+                overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.u}</div>
+            </div>
+            <span style={{color:phase.col,flexShrink:0,fontSize:"12px"}}>↗</span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+}
+
+// ── RUNBOOK ───────────────────────────────────────────────────────────────────
+function Runbook(){
+  const [open,setOpen]=useState({"0-0":true});
+  const toggle=k=>setOpen(p=>({...p,[k]:!p[k]}));
+
+  return <div className="scroll-panel layer" style={{padding:"20px 24px"}}>
+    <div style={{marginBottom:"20px",fontSize:"11px",color:"var(--muted)"}}>
+      <span style={{color:"var(--neon)"}}>$ </span>
+      <span>cat runbook.md | fold --all-sections</span>
+    </div>
+
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"16px",marginBottom:"20px"}}>
+      {RUNBOOK_DATA.map((section,si)=>(
+        <div key={si} style={{border:"1px solid var(--border2)",background:"var(--g1)"}}>
+          <div style={{
+            padding:"10px 14px",borderBottom:"1px solid var(--border2)",
+            fontSize:"10px",color:"var(--neon)",letterSpacing:"1.5px",fontWeight:700
+          }}>{section.label}</div>
+          {section.items.map((item,ii)=>{
+            const k=`${si}-${ii}`;
+            const isOpen=open[k];
+            return <div key={ii}>
+              <div className="row-hover" onClick={()=>toggle(k)} style={{
+                padding:"10px 14px",
+                borderBottom:isOpen?"none":`1px solid var(--border)`,
+                display:"flex",justifyContent:"space-between",gap:"12px",
+                userSelect:"none",
+              }}>
+                <span style={{fontSize:"11px",color:"var(--text)",letterSpacing:".3px"}}>{item.t}</span>
+                <span style={{
+                  color:isOpen?"var(--neon)":"var(--muted)",flexShrink:0,fontSize:"10px",
+                  transform:isOpen?"rotate(90deg)":"none",transition:"transform .15s",
+                  display:"inline-block"
+                }}>▶</span>
+              </div>
+              {isOpen&&<div style={{
+                padding:"10px 14px 14px",fontSize:"10px",color:"var(--muted)",
+                lineHeight:1.8,borderBottom:"1px solid var(--border)",
+                borderLeft:"2px solid var(--neon)",marginLeft:"14px",
+                background:"var(--black)"
+              }}>{item.d}</div>}
+            </div>
+          })}
+        </div>
+      ))}
+    </div>
+
+    {/* Key dates */}
+    <div style={{border:"1px solid rgba(0,255,157,.2)",background:"rgba(0,255,157,.04)",padding:"16px"}}>
+      <div style={{fontSize:"9px",color:"var(--neon)",letterSpacing:"2px",marginBottom:"14px",fontWeight:700}}>
+        // KEY_DATES.csv
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1px",background:"var(--border)"}}>
+        {[
+          ["2026-03-12","Phase 1 START — SQL & Data Modeling","var(--neon)"],
+          ["2026-04-09","Phase 2 START — Spark/PySpark","var(--amber)"],
+          ["2026-05-07","Phase 3 START — Airflow & Pipelines","#b44dff"],
+          ["2026-06-04","Phase 4 START — System Design & Interviews","var(--red)"],
+          ["2026-06-30","MSc VIT Major Project Submission","var(--blue)"],
+          ["2026-07-01","Target: DE Role Offer Signed ★","var(--amber)"],
+        ].map(([d,l,c])=>(
+          <div key={d} style={{background:"var(--bg)",padding:"10px 14px",display:"flex",gap:"14px"}}>
+            <span style={{color:c||"var(--neon)",fontWeight:700,fontSize:"10px",flexShrink:0,minWidth:"80px"}}>{d.slice(5)}</span>
+            <span style={{color:"var(--muted)",fontSize:"10px"}}>{l}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+}
+
+// ── APP ───────────────────────────────────────────────────────────────────────
+function App(){
+  const [tab,setTab]=useState("DASHBOARD");
+  const [progress,setProgress]=useState(()=>load("de_prog",{daily:{},notes:{}}));
+  const panels={
+    DASHBOARD:<Dashboard progress={progress}/>,
+    MAP:<ScheduleMap/>,
+    TODAY:<Today progress={progress} setProgress={setProgress}/>,
+    RESOURCES:<Resources/>,
+    RUNBOOK:<Runbook/>
+  };
+  return <>
+    <Topbar tab={tab} setTab={setTab}/>
+    <div style={{flex:1,overflow:"hidden",position:"relative",zIndex:1}}>
+      {panels[tab]}
+    </div>
+  </>
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
